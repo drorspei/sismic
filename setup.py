@@ -51,7 +51,7 @@ setup(
         'behave>=1.2.6',
         'typing>=3.5.1',
         'six',
-        'backports'
+        'backports.tempfile'
     ],
 
     entry_points={
