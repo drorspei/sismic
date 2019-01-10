@@ -20,7 +20,7 @@ from ..model import (CompoundState, DeepHistoryState, Event,
 __all__ = ['Interpreter']
 
 
-class _KeyifyList():
+class _KeyifyList(object):
     def __init__(self, inner, key):
         self.inner = inner
         self.key = key
@@ -32,12 +32,12 @@ class _KeyifyList():
         return self.key(self.inner[k])
 
 
-class Interpreter:
+class Interpreter(object):
     """
     A discrete interpreter that executes a statechart according to a semantic close to SCXML
     (eventless transitions first, inner-first/source state semantics).
 
-    :param statechart: statechart to interpret
+    :param Statechart statechart: statechart to interpret
     :param evaluator_klass: An optional callable (e.g. a class) that takes an interpreter and an optional initial
         context as input and returns an *Evaluator* instance that will be used to initialize the interpreter.
         By default, the *PythonEvaluator* class will be used.
@@ -48,11 +48,13 @@ class Interpreter:
     :param ignore_contract: set to True to ignore contract checking during the execution.
     """
 
-    def __init__(self, statechart: Statechart, *,
-                 evaluator_klass: Callable[..., Evaluator]=PythonEvaluator,
-                 initial_context: Mapping[str, Any]=None,
-                 clock: Clock=None,
-                 ignore_contract: bool=False) -> None:
+    def __init__(self, statechart, **kwargs):
+        evaluator_klass = kwargs.get("evaluator_klass", PythonEvaluator)
+        """@type: Callable[..., Evaluator]"""
+        initial_context = kwargs.get("initial_context", None)  # type: Mapping[str, Any]
+        clock = kwargs.get("clock", None)  # type: Clock
+        ignore_contract = kwargs.get("ignore_contract", False)  # type: bool
+
         # Internal variables
         self._ignore_contract = ignore_contract
         self._statechart = statechart
@@ -81,47 +83,58 @@ class Interpreter:
         self._evaluator.execute_statechart(statechart)
 
     @property
-    def time(self) -> float:
+    def time(self):
         """
         Time of the latest execution.
+        :rtype: float
         """
         return self._time
 
     @time.setter
-    def time(self, value: float):
+    def time(self, value):
+        """
+
+        :param float value:
+        :return:
+        """
         warnings.warn('Interpreter.time is deprecated since 1.3.0, use Interpreter.clock.time instead', DeprecationWarning)
         self.clock.time = value  # type: ignore
 
     @property
-    def configuration(self) -> List[str]:
+    def configuration(self):
         """
         List of active states names, ordered by depth. Ties are broken according to the lexicographic order
         on the state name.
+
+        :rtype: List[str]
         """
         return sorted(self._configuration, key=lambda s: (self._statechart.depth_for(s), s))
 
     @property
-    def context(self) -> Mapping[str, Any]:
+    def context(self):
         """
         The context of execution.
+        :rtype: Mapping[str, Any]
         """
         return self._evaluator.context
 
     @property
-    def final(self) -> bool:
+    def final(self):
         """
         Boolean indicating whether this interpreter is in a final configuration.
+        :rtype: bool
         """
         return self._initialized and len(self._configuration) == 0
 
     @property
-    def statechart(self) -> Statechart:
+    def statechart(self):
         """
         Embedded statechart
+        :rtype: Statechart
         """
         return self._statechart
 
-    def attach(self, listener: Callable[[MetaEvent], Any]) -> None:
+    def attach(self, listener):
         """
         Attach given listener to the current interpreter. 
 
@@ -142,19 +155,19 @@ class Interpreter:
 
         Consult ``sismic.interpreter.listener`` for common listeners/wrappers.
 
-        :param listener: A callable that accepts meta-event instances.
+        :param Callable[[MetaEvent], Any] listener: A callable that accepts meta-event instances.
         """
         self._listeners.append(listener)
 
-    def detach(self, listener: Callable[[MetaEvent], Any]) -> None:
+    def detach(self, listener):
         """
         Remove given listener from the ones that are currently attached to this interpreter.
         
-        :param listener: A previously attached listener.
+        :param Callable[[MetaEvent], Any] listener: A previously attached listener.
         """
         self._listeners.remove(listener)
 
-    def bind(self, interpreter_or_callable: Union['Interpreter', Callable[[Event], Any]]) -> Callable[[MetaEvent], Any]:
+    def bind(self, interpreter_or_callable):
         """
         Bind an interpreter (or a callable) to the current interpreter.
 
@@ -166,8 +179,9 @@ class Interpreter:
         If ``x = interpreter.bind(...)``, use ``interpreter.detach(x)`` to unbind a
         previously bound interpreter. 
         
-        :param interpreter_or_callable: interpreter or callable to bind.
+        :param Union['Interpreter', Callable[[Event], Any]] interpreter_or_callable: interpreter or callable to bind.
         :return: the resulting attached listener.
+        :rtype: Callable[[MetaEvent], Any]
         """
         if isinstance(interpreter_or_callable, Interpreter):
             listener = InternalEventListener(interpreter_or_callable.queue)
@@ -178,7 +192,7 @@ class Interpreter:
         
         return listener
 
-    def bind_property_statechart(self, statechart: Statechart, *, interpreter_klass: Callable=None) -> Callable[[MetaEvent], Any]:
+    def bind_property_statechart(self, statechart, **kwargs):
         """
         Bind a property statechart to the current interpreter.
 
@@ -196,11 +210,14 @@ class Interpreter:
         If ``x = interpreter.bind_property_statechart(...)``, use ``interpreter.detach(x)`` to unbind a
         previously bound property statechart. 
 
-        :param statechart: A statechart instance.
+        :param Statechart statechart: A statechart instance.
         :param interpreter_klass: An optional callable that accepts a statechart as first parameter and a
         named parameter clock. Default to Interpreter.
         :return: the resulting attached listener.
+        :rtype: Callable[[MetaEvent], Any]
         """
+        interpreter_klass = kwargs.get("interpreter_klass")  # type: Callable
+
         if isinstance(statechart, Interpreter):
             warnings.warn('Passing an interpreter to bind_property_statechart is deprecated since 1.4.0. Use interpreter_klass instead.', DeprecationWarning)
             interpreter = statechart
@@ -214,7 +231,7 @@ class Interpreter:
 
         return listener
 
-    def queue(self, event_or_name:Union[str, Event], *event_or_names:Union[str, Event], **parameters) -> 'Interpreter':
+    def queue(self, event_or_name, *event_or_names, **parameters):
         """
         Create and queue given events to the external event queue.
 
@@ -224,17 +241,18 @@ class Interpreter:
         If named parameters are provided, they will be added to all events
         that are provided by name.
 
-        :param event_or_name: name of the event or Event instance
-        :param event_or_names: additional events
+        :param Union[str, Event] event_or_name: name of the event or Event instance
+        :param Union[str, Event] event_or_names: additional events
         :param parameters: event parameters.
         :return: *self* so it can be chained.
+        :rtype: Interpreter
         """
         for event in [event_or_name] + list(event_or_names):
             event = Event(event, **parameters) if isinstance(event, str) else event
             self._queue_event(event)
         return self
 
-    def execute(self, max_steps: int = -1) -> List[MacroStep]:
+    def execute(self, max_steps=-1):
         """
         Repeatedly calls *execute_once* and return a list containing
         the returned values of *execute_once*.
@@ -242,10 +260,11 @@ class Interpreter:
         Notice that this does NOT return an iterator but computes the whole list first
         before returning it.
 
-        :param max_steps: An upper bound on the number steps that are computed and returned.
+        :param int max_steps: An upper bound on the number steps that are computed and returned.
             Default is -1, no limit. Set to a positive integer to avoid infinite loops
             in the statechart execution.
         :return: A list of *MacroStep* instances
+        :rtype: List[MacroStep]
         """
         returned_steps = []
         i = 0
@@ -258,7 +277,7 @@ class Interpreter:
             macro_step = self.execute_once()
         return returned_steps
 
-    def execute_once(self) -> Optional[MacroStep]:
+    def execute_once(self):
         """
         Select transitions that can be fired based on available queued events, process them and stabilize
         the interpreter. When multiple transitions are selected, they are atomically processed:
@@ -266,6 +285,7 @@ class Interpreter:
         after that, the next transition is processed.
 
         :return: a macro step or *None* if nothing happened
+        :rtype: Optional[MacroStep]
         """
         # Store time to have a consistent time value during this step
         self._time = self.clock.time
@@ -308,11 +328,11 @@ class Interpreter:
 
         return macro_step
 
-    def _queue_event(self, event: Event):
+    def _queue_event(self, event):
         """
         Convenient helper to queue events wrt. to internal/external and their (optional) delay.
 
-        :param event: Event to queue.
+        :param Event event: Event to queue.
         """
         if isinstance(event, InternalEvent):
             queue = cast(List[Tuple[float, Event]], self._internal_queue)
@@ -326,13 +346,13 @@ class Interpreter:
         )
         queue.insert(position, (time, event))
 
-    def _raise_event(self, event: Union[InternalEvent, MetaEvent]) -> None:
+    def _raise_event(self, event):
         """
         Raise an event from the statechart.
 
         Only InternalEvent and MetaEvent (and their subclasses) are accepted.
         
-        :param event: event to be sent by the statechart.
+        :param Union[InternalEvent, MetaEvent] event: event to be sent by the statechart.
         """
         if isinstance(event, InternalEvent):
             self._queue_event(event)
@@ -346,14 +366,17 @@ class Interpreter:
         else:
             raise ValueError('Only InternalEvent and MetaEvent can be sent by a statechart, not {}'.format(type(event)))
 
-    def _select_event(self, *, consume: bool=False) -> Optional[Event]:
+    def _select_event(self, **kwargs):
         """
         Return the next event to process.
         Internal events have priority over external ones.
 
         :param consume: Indicates whether event should be consumed, default to False.
         :return: An instance of Event or None if no event is available
+        :rtype: Optional[Event]
         """
+        consume = kwargs.get("consume", False)
+
         for queue in cast(Tuple[List[Tuple[float, Event]]], (self._internal_queue, self._external_queue)):
             if len(queue) > 0:
                 time, event = queue[0]
@@ -363,8 +386,7 @@ class Interpreter:
                     return event
         return None
 
-    def _select_transitions(self, event: Optional[Event], states: Iterable[str], *,
-                            eventless_first=True, inner_first=True) -> List[Transition]:
+    def _select_transitions(self, event, states, **kwargs):
         """
         Select and return the transitions that are triggered, based on given event
         (or None if no event can be consumed) and given list of states.
@@ -372,12 +394,16 @@ class Interpreter:
         By default, this function prioritizes eventless transitions and follows
         inner-first/source state semantics.
 
-        :param event: event to consider, possibly None.
-        :param states: state names to consider.
+        :param Optional[Event] event: event to consider, possibly None.
+        :param Iterable[str] states: state names to consider.
         :param eventless_first: True to prioritize eventless transitions.
         :param inner_first: True to follow inner-first/source state semantics.
         :return: list of triggered transitions.
+        :rtype: List[Transition]
         """
+        eventless_first = kwargs.get("eventless_first", True)
+        inner_first = kwargs.get("inner_first", True)
+
         selected_transitions = []  # type: List[Transition]
         considered_transitions = []  # type: List[Transition]
         _state_depth_cache = dict()  # type: Dict[str, int]
@@ -436,13 +462,14 @@ class Interpreter:
 
         return selected_transitions
 
-    def _sort_transitions(self, transitions: List[Transition]) -> List[Transition]:
+    def _sort_transitions(self, transitions):
         """
         Given a list of triggered transitions, return a list of transitions in an order that represents
         the order in which they have to be processed.
 
-        :param transitions: a list of *Transition* instances
+        :param List[Transition] transitions: a list of *Transition* instances
         :return: an ordered list of *Transition* instances
+        :rtype: List[Transition]
         :raise ExecutionError: In case of non-determinism (*NonDeterminismError*) or conflicting
             transitions (*ConflictingTransitionsError*).
         """
@@ -486,12 +513,13 @@ class Interpreter:
 
         return transitions
 
-    def _compute_steps(self) -> List[MicroStep]:
+    def _compute_steps(self):
         """
         Compute and returns the next steps based on current configuration
         and event queues.
 
         :return: a possibly empty list of steps
+        :rtype: List[MicroStep]
         """
         # Initialization
         if not self._initialized:
@@ -519,15 +547,16 @@ class Interpreter:
 
         return self._create_steps(event, transitions)
 
-    def _create_steps(self, event: Optional[Event],
-                      transitions: Iterable[Transition]) -> List[MicroStep]:
+    def _create_steps(self, event,
+                      transitions):
         """
         Return a (possibly empty) list of micro steps. Each micro step corresponds to the process of a transition
         matching given event.
 
-        :param event: the event to consider, if any
-        :param transitions: the transitions that should be processed
+        :param Optional[Event] event: the event to consider, if any
+        :param Iterable[Transition] transitions: the transitions that should be processed
         :return: a list of micro steps.
+        :rtype: List[MicroStep]
         """
         returned_steps = []
         for transition in transitions:
@@ -572,7 +601,7 @@ class Interpreter:
 
         return returned_steps
 
-    def _create_stabilization_step(self, names: Iterable[str]) -> Optional[MicroStep]:
+    def _create_stabilization_step(self, names):
         """
         Return a stabilization step, ie. a step that lead to a more stable situation
         for the current statechart. Stabilization means:
@@ -582,8 +611,9 @@ class Interpreter:
          - Enter the children of an orthogonal state with no active child
          - Empty active configuration if root's child is a final state
 
-        :param names: List of states to consider (usually, the active configuration)
+        :param Iterable[str] names: List of states to consider (usually, the active configuration)
         :return: A *MicroStep* instance or *None* if this statechart can not be more stabilized
+        :rtype: Optional[MicroStep]
         """
         # Check if we are in a set of "stable" states
         leaves_names = self._statechart.leaf_for(names)
@@ -604,12 +634,13 @@ class Interpreter:
 
         return None
 
-    def _apply_step(self, step: MicroStep) -> MicroStep:
+    def _apply_step(self, step):
         """
         Apply given *MicroStep* on this statechart
 
-        :param step: *MicroStep* instance
+        :param MicroStep step: *MicroStep* instance
         :return: a new MicroStep, completed with sent events
+        :rtype: MicroStep
         """
         entered_states = list(map(self._statechart.state_for, step.entered_states))
         exited_states = list(map(self._statechart.state_for, step.exited_states))
@@ -683,18 +714,20 @@ class Interpreter:
             self._raise_event(MetaEvent('state entered', state=state.name))
 
         # Send events
-        for event in cast(Union[InternalEvent, MetaEvent], sent_events):
+        # for event in cast(Union[InternalEvent, MetaEvent], sent_events):
+        for event in sent_events:
             self._raise_event(event)
 
         return MicroStep(event=step.event, transition=step.transition,
                          entered_states=step.entered_states, exited_states=step.exited_states,
                          sent_events=sent_events)
 
-    def _stabilize(self) -> List[MicroStep]:
+    def _stabilize(self):
         """
         Compute, apply and return stabilization steps.
 
         :return: A list of applied  *MicroStep* instances,
+        :rtype: List[MicroStep]
         """
         # Stabilization
         steps = []
@@ -704,15 +737,15 @@ class Interpreter:
             step = self._create_stabilization_step(self._configuration)
         return steps
 
-    def _evaluate_contract_conditions(self, obj: Union[Transition, StateMixin],
-                                      cond_type: str,
-                                      step: Optional[Union[MacroStep, MicroStep]]=None) -> None:
+    def _evaluate_contract_conditions(self, obj,
+                                      cond_type,
+                                      step=None):
         """
         Evaluate the conditions for given object.
 
-        :param obj: object with preconditions, postconditions or invariants
-        :param cond_type: either "preconditions", "postconditions" or "invariants"
-        :param step: step in which the check occurs.
+        :param Union[Transition, StateMixin] obj: object with preconditions, postconditions or invariants
+        :param str cond_type: either "preconditions", "postconditions" or "invariants"
+        :param Optional[Union[MacroStep, MicroStep]] step: step in which the check occurs.
         :raises ContractError: if a condition fails and *ignore_contract* is False.
         """
         if self._ignore_contract:

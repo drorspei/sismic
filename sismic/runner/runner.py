@@ -46,11 +46,11 @@ class AsyncRunner:
     set to True, then `execute_once` is repeatedly called until no macro step can be
     processed in the current cycle.
 
-    :param interpreter: interpreter instance to run.
-    :param interval: interval between two calls to `execute`
+    :param Interpreter interpreter: interpreter instance to run.
+    :param float interval: interval between two calls to `execute`
     :param execute_all: Repeatedly call interpreter's `execute_once` method at each step.
     """
-    def __init__(self, interpreter: Interpreter, interval: float=0.1, execute_all=False) -> None:
+    def __init__(self, interpreter, interval=0.1, execute_all=False):
         self._unpaused = threading.Event()
         self._stop = threading.Event()
 
@@ -112,9 +112,11 @@ class AsyncRunner:
         if self._thread.isAlive():
             self._thread.join()
 
-    def execute(self) -> List[MacroStep]:
+    def execute(self):
         """
         Called each time the interpreter has to be executed.
+
+        :rtype: List[MacroStep]
         """
         steps = []
         step = self.interpreter.execute_once()
@@ -134,12 +136,12 @@ class AsyncRunner:
         """
         pass
 
-    def after_execute(self, steps: List[MacroStep]):
+    def after_execute(self, steps):
         """
         Called after each call to self.execute().
         Receives the return value of self.execute().
 
-        :param steps: List of macrosteps returned by self.execute()
+        :param List[MacroStep] steps: List of macrosteps returned by self.execute()
         """
         pass
 
@@ -166,7 +168,7 @@ class AsyncRunner:
             self.after_execute(r)
 
             elapsed = time.time() - starttime
-            time.sleep(max(0, self.interval - elapsed))
+            time.sleep(max(0., self.interval - elapsed))
             self._unpaused.wait()
 
         # Ensure that self._stop is set if self.interpreter.final holds

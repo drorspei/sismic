@@ -10,7 +10,9 @@ def do_nothing(context):
 
 
 @given('I reproduce "{scenario}"')
-def reproduce_scenario(context, scenario, *, keyword='Given'):
+def reproduce_scenario(context, scenario, **kwargs):
+    keyword = kwargs.get("keyword", 'Given')
+
     current_feature = context.feature
     for included_scenario in current_feature.scenarios:
         if included_scenario.name == scenario:
@@ -27,7 +29,9 @@ def _reproduce_scenario(context, scenario):
 
 
 @given('I repeat "{step}" {repeat:d} times')
-def repeat_step(context, step, repeat, *, keyword='Given'):
+def repeat_step(context, step, repeat, **kwargs):
+    keyword = kwargs.get("keyword", 'Given')
+
     for _ in range(repeat):
         context.execute_steps('{} {}'.format(keyword, step))
 

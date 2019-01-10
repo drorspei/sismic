@@ -4,7 +4,7 @@ from typing import Any
 __all__ = ['Event', 'InternalEvent', 'MetaEvent']
 
 
-class Event:
+class Event(object):
     """
     An event with a name and (optionally) some data passed as named parameters.
 
@@ -16,13 +16,13 @@ class Event:
     When two events are compared, they are considered equal if their names
     and their data are equal.
 
-    :param name: name of the event.
-    :param data: additional data passed as named parameters.
+    :param str name: name of the event.
+    :param Any data: additional data passed as named parameters.
     """
 
     __slots__ = ['name', 'data']
 
-    def __init__(self, name: str, **additional_parameters: Any) -> None:
+    def __init__(self, name, **additional_parameters):
         self.name = name
         self.data = additional_parameters
 
@@ -71,9 +71,9 @@ class DelayedEvent(Event):
 
     Deprecated since 1.4.0, use `Event` with a `delay` parameter instead.
     """
-    def __init__(self, name: str, delay: float, **additional_parameters: Any) -> None:
+    def __init__(self, name, delay, **additional_parameters):
         warnings.warn('DelayedEvent is deprecated since 1.4.0, use Event with a delay parameter instead.', DeprecationWarning)
-        super().__init__(name, delay=delay, **additional_parameters)
+        super(DelayedEvent, self).__init__(name, delay=delay, **additional_parameters)
 
 
 class MetaEvent(Event):

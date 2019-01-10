@@ -5,7 +5,12 @@ from ..io import import_from_yaml
 from .wrappers import execute_bdd
 
 
-def cli(args=None) -> int:
+def cli(args=None):
+    """
+
+    :param args:
+    :rtype: int
+    """
     parser = argparse.ArgumentParser(prog='sismic-bdd',
                                      description='Command-line utility to execute Gherkin feature files using Behave.\n'
                                                  'Extra parameters will be passed to Behave.')

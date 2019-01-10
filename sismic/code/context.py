@@ -8,7 +8,7 @@ from ..model import Event, InternalEvent, MetaEvent
 __all__ = ['TimeContextProvider', 'EventContextProvider', 'FrozenContext']
 
 
-class TimeContextProvider:
+class TimeContextProvider(object):
     """
     A context provider for time related predicates. 
 
@@ -17,51 +17,60 @@ class TimeContextProvider:
 
     This provider needs to be attached to an interpreter.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         self._entry_time = dict()  # type: Dict[str, float]
         self._idle_time = dict()  # type: Dict[str, float]
         self._time = 0  # type: float
         self._configuration = []  # type: List[str]
 
     @property
-    def time(self) -> float:
+    def time(self):
         """
-        Current time of the interpreter. 
+        Current time of the interpreter.
+        :rtype: float
         """
         return self._time
 
-    def after(self, name: str, seconds: float) -> bool:
+    def after(self, name, seconds):
         """
         Return True if and only if given state was entered for more than given
         time, expressed in seconds. 
 
-        :param name: name of the state.
-        :param seconds: elapsed time to use for comparison.
+        :param str name: name of the state.
+        :param float seconds: elapsed time to use for comparison.
         :return: True iff. given state was entered for more than given time.
+        :rtype: bool
         """
         return self.time - seconds >= self._entry_time[name]
 
-    def idle(self, name: str, seconds: float) -> bool:
+    def idle(self, name, seconds):
         """
         Return True if and only if given state did not fire a transition for more 
         than given time, expressed in seconds. 
 
-        :param name: name of the state.
-        :param seconds: elapsed time to use for comparison.
+        :param str name: name of the state.
+        :param float seconds: elapsed time to use for comparison.
         :return: True iff. given state did not fire a transition for more than given time.
+        :rtype: bool
         """
         return self.time - seconds >= self._idle_time[name]
 
-    def active(self, name: str) -> bool:
+    def active(self, name):
         """
         Return True if and only if given state is active.
 
-        :param name: name of the state.
+        :param str name: name of the state.
         :return: True iff. given state is active.
+        :rtype: bool
         """
         return name in self._configuration
 
-    def __call__(self, event: MetaEvent):
+    def __call__(self, event):
+        """
+
+        :param MetaEvent event:
+        :return:
+        """
         if event.name == 'step started':
             self._time = event.time
         elif event.name == 'state entered':
@@ -74,7 +83,7 @@ class TimeContextProvider:
             self._idle_time[event.source] = self._time
 
 
-class EventContextProvider:
+class EventContextProvider(object):
     """
     A context provider for event related predicates.
     
@@ -87,51 +96,58 @@ class EventContextProvider:
 
     This provider needs to be attached to an interpreter.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         self.pending = []  # type: List[Event]
         self._sent = []  # type: List[Event]
         self._consumed = None  # type: Optional[Event]
 
-    def send(self, name: str, **kwargs) -> None:
+    def send(self, name, **kwargs):
         """
         Create an internal event and store it for further sending.
 
-        :param name: name of the event.
+        :param str name: name of the event.
         :param **kwargs: additional event parameters.
         """
         self.pending.append(InternalEvent(name, **kwargs))
 
-    def notify(self, name: str, **kwargs) -> None:
+    def notify(self, name, **kwargs):
         """
         Create a meta event and store it for further sending.
 
-        :param name: name of the event.
+        :param str name: name of the event.
         :param **kwargs: additional event parameters.
         """
         self.pending.append(MetaEvent(name, **kwargs))
 
-    def sent(self, name: str) -> bool:
+    def sent(self, name):
         """
         Return True if and only if given internal event was sent during 
         current step.
 
-        :param name: name of the event.
+        :param str name: name of the event.
         :return: True iff. event was sent.
+        :rtype: bool
         """
         return any((name == e.name for e in self._sent))
 
-    def received(self, name: str) -> bool:
+    def received(self, name):
         """
         Return True if and only if given event is currently processed.
         This function should only be used during contract evaluation, and not
         during guard evaluation, as it relies on the *consumed* event.
 
-        :param name: name of the event.
+        :param str name: name of the event.
         :return: True iff. event is processed.
+        :rtype: bool
         """
         return getattr(self._consumed, 'name', None) == name
     
-    def __call__(self, event: MetaEvent) -> None:
+    def __call__(self, event):
+        """
+
+        :param MetaEvent event:
+        :return:
+        """
         if event.name == 'event consumed':
             self._consumed = event.event
         elif event.name == 'event sent':
@@ -149,7 +165,11 @@ class FrozenContext(collections.Mapping):
     """
     __slots__ = ['__frozencontext']
 
-    def __init__(self, context: Dict) -> None:
+    def __init__(self, context):
+        """
+
+        :param Dict context:
+        """
         self.__frozencontext = {k: copy.copy(v) for k, v in context.items()}
 
     def __getattr__(self, item):

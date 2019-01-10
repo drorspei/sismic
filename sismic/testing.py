@@ -13,12 +13,12 @@ __all__ = [
 MacroSteps = Union[MacroStep, List[MacroStep]]
 
 
-def state_is_entered(steps: MacroSteps, name: str) -> bool:
+def state_is_entered(steps, name):
     """
     Holds if state was entered during given steps.
 
-    :param steps: a macrostep or list of macrosteps
-    :param name: name of a state
+    :param MacroSteps steps: a macrostep or list of macrosteps
+    :param str name: name of a state
     :return: given state was entered
     """
     steps = steps if isinstance(steps, list) else [steps]
@@ -28,13 +28,14 @@ def state_is_entered(steps: MacroSteps, name: str) -> bool:
     return False
 
 
-def state_is_exited(steps: MacroSteps, name: str) -> bool:
+def state_is_exited(steps, name):
     """
     Holds if state was exited during given steps.
 
-    :param steps: a macrostep or list of macrosteps
-    :param name: name of a state
+    :param MacroSteps steps: a macrostep or list of macrosteps
+    :param str name: name of a state
     :return: given state was exited
+    :rtype: bool
     """
     steps = steps if isinstance(steps, list) else [steps]
     for step in steps:
@@ -43,7 +44,7 @@ def state_is_exited(steps: MacroSteps, name: str) -> bool:
     return False
 
 
-def event_is_fired(steps: MacroSteps, name: Optional[str], parameters: Mapping[str, Any]=None) -> bool:
+def event_is_fired(steps, name, parameters=None):
     """
     Holds if an event was fired during given steps.
 
@@ -52,10 +53,11 @@ def event_is_fired(steps: MacroSteps, name: Optional[str], parameters: Mapping[s
     attribute of the event. Not *all* parameters have to be provided, as only
     the ones that are provided are actually compared.
 
-    :param steps: a macrostep or list of macrosteps
-    :param name: name of an event
-    :param parameters: additional parameters
+    :param MacroSteps steps: a macrostep or list of macrosteps
+    :param Optional[str] name: name of an event
+    :param Mapping[str, Any] parameters: additional parameters
     :return: event was fired
+    :rtype: bool
     """
     steps = steps if isinstance(steps, list) else [steps]
     parameters = dict() if parameters is None else parameters
@@ -73,7 +75,7 @@ def event_is_fired(steps: MacroSteps, name: Optional[str], parameters: Mapping[s
     return False
 
 
-def event_is_consumed(steps: MacroSteps, name: Optional[str], parameters: Mapping[str, Any]=None) -> bool:
+def event_is_consumed(steps, name, parameters=None):
     """
     Holds if an event was consumed during given steps.
 
@@ -82,10 +84,11 @@ def event_is_consumed(steps: MacroSteps, name: Optional[str], parameters: Mappin
     attribute of the event. Not *all* parameters have to be provided, as only
     the ones that are provided are actually compared.
 
-    :param steps: a macrostep or list of macrosteps
-    :param name: name of an event
-    :param parameters: additional parameters
+    :param MacroSteps steps: a macrostep or list of macrosteps
+    :param Optional[str] name: name of an event
+    :param Mapping[str, Any] parameters: additional parameters
     :return: event was consumed
+    :rtype: bool
     """
     steps = steps if isinstance(steps, list) else [steps]
     parameters = dict() if parameters is None else parameters
@@ -105,15 +108,16 @@ def event_is_consumed(steps: MacroSteps, name: Optional[str], parameters: Mappin
     return False
 
 
-def transition_is_processed(steps: MacroSteps, transition: Optional[Transition]=None) -> bool:
+def transition_is_processed(steps, transition=None):
     """
     Holds if a transition was processed during given steps.
 
     If no transition is provided, this function looks for any transition.
 
-    :param steps: a macrostep or list of macrosteps
-    :param transition: a transition
+    :param MacroSteps steps: a macrostep or list of macrosteps
+    :param Optional[Transition] transition: a transition
     :return: transition was processed
+    :rtype: bool
     """
     steps = steps if isinstance(steps, list) else [steps]
 
@@ -129,13 +133,14 @@ def transition_is_processed(steps: MacroSteps, transition: Optional[Transition]=
         return False
 
 
-def expression_holds(interpreter: Interpreter, expression: str) -> bool:
+def expression_holds(interpreter, expression):
     """
     Holds if given expression holds.
 
-    :param interpreter: current interpreter
-    :param expression: expression to evaluate
+    :param Interpreter interpreter: current interpreter
+    :param str expression: expression to evaluate
     :return: expression holds
+    :rtype: bool
     """
     return interpreter._evaluator._evaluate_code(expression)
 

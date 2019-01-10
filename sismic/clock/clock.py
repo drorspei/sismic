@@ -6,17 +6,20 @@ from time import time
 __all__ = ['Clock', 'SimulatedClock', 'UtcClock', 'SynchronizedClock']
 
 
-class Clock(metaclass=abc.ABCMeta):
+class Clock(object):
     """
     Abstract implementation of a clock, as used by an interpreter.
 
     The purpose of a clock instance is to provide a way for the interpreter
     to get the current time during the execution of a statechart.
     """
+    __metaclass__ = abc.ABCMeta
+
     @abc.abstractproperty
-    def time(self) -> float:
+    def time(self):
         """
         Current time
+        :rtype: float
         """
         raise NotImplementedError()
 
@@ -35,7 +38,7 @@ class SimulatedClock(Clock):
     A value strictly greater than 1 increases clock speed while a value strictly
     lower than 1 slows down the clock.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         self._base = time()
         self._time = 0
         self._play = False
@@ -45,7 +48,7 @@ class SimulatedClock(Clock):
     def _elapsed(self):
         return (time() - self._base) * self._speed if self._play else 0
 
-    def start(self) -> None:
+    def start(self):
         """
         Clock will be automatically updated both based on real time and
         its speed attribute.
@@ -54,7 +57,7 @@ class SimulatedClock(Clock):
             self._base = time()
             self._play = True
 
-    def stop(self) -> None:
+    def stop(self):
         """
         Clock won't be automatically updated.
         """
@@ -63,9 +66,10 @@ class SimulatedClock(Clock):
             self._play = False
 
     @property
-    def speed(self) -> float:
+    def speed(self):
         """
         Speed of the current clock. Only affects time if start() is called.
+        :rtype: float
         """
         return self._speed
 
@@ -76,9 +80,10 @@ class SimulatedClock(Clock):
         self._speed = speed
 
     @property
-    def time(self) -> float:
+    def time(self):
         """
         Time value of this clock.
+        :rtype: float
         """
         return self._time + self._elapsed
 
@@ -116,7 +121,11 @@ class UtcClock(Clock):
     """
 
     @property
-    def time(self) -> float:
+    def time(self):
+        """
+
+        :rtype: float
+        """
         return time()
 
 
@@ -130,9 +139,13 @@ class SynchronizedClock(Clock):
 
     :param interpreter: an interpreter instance
     """
-    def __init__(self, interpreter) -> None:
+    def __init__(self, interpreter):
         self._interpreter = interpreter
 
     @property
-    def time(self) -> float:
+    def time(self):
+        """
+
+        :rtype: float
+        """
         return self._interpreter.time

@@ -1,3 +1,4 @@
+from future.utils import raise_from
 from functools import partial
 from types import CodeType
 from typing import Any, Dict, List, Optional, Mapping, Iterator
@@ -54,8 +55,10 @@ class PythonEvaluator(Evaluator):
         is expected to be an *Interpreter* instance
     :param initial_context: a dictionary that will be used as *__locals__*
     """
-    def __init__(self, interpreter=None, *, initial_context: Mapping[str, Any]=None) -> None:
-        super().__init__(interpreter, initial_context=initial_context)
+    def __init__(self, interpreter=None, **kwargs):
+        initial_context = kwargs.get("initial_context")  # type : Mapping[str, Any]
+
+        super(PythonEvaluator, self).__init__(interpreter, initial_context=initial_context)
 
         self._context = {}  # type: Dict[str, Any]
         self._context.update(initial_context if initial_context else {})
@@ -76,27 +79,34 @@ class PythonEvaluator(Evaluator):
         self._memory = {}  # type: Dict[int, FrozenContext]
 
     @property
-    def context(self) -> Mapping:
+    def context(self):
+        """
+
+        :rtype: Mapping
+        """
         return self._context
 
-    def _setdefault(self, name: str, value: Any) -> Any:
+    def _setdefault(self, name, value):
         """
         Define and return variable "name".
 
-        :param name: name of the variable
-        :param value: value to use for that variable, if not defined
+        :param str name: name of the variable
+        :param Any value: value to use for that variable, if not defined
         :return: value of the variable
         """
         return self._context.setdefault(name, value)
 
-    def _evaluate_code(self, code: Optional[str], *, additional_context: Mapping[str, Any]=None) -> bool:
+    def _evaluate_code(self, code, **kwargs):
         """
         Evaluate given code using Python.
 
-        :param code: code to evaluate
+        :param Optional[str] code: code to evaluate
         :param additional_context: an optional additional context
         :return: truth value of *code*
+        :rtype: bool
         """
+        additional_context = kwargs.get("additional_context")  # type: Mapping[str, Any]
+
         if code is None:
             return True
 
@@ -113,17 +123,20 @@ class PythonEvaluator(Evaluator):
         try:
             return eval(compiled_code, exposed_context, self._context)  # type: ignore
         except Exception as e:
-            raise CodeEvaluationError('"{}" occurred while evaluating "{}"'.format(e, code)) from e
+            raise_from(CodeEvaluationError('"{}" occurred while evaluating "{}"'.format(e, code)), e)
 
 
-    def _execute_code(self, code: Optional[str], *, additional_context: Mapping[str, Any]=None) -> List[Event]:
+    def _execute_code(self, code, **kwargs):
         """
         Execute given code using Python.
 
-        :param code: code to execute
+        :param Optional[str] code: code to execute
         :param additional_context: an optional additional context
         :return: a list of sent events
+        :rtype: List[Event]
         """
+        additional_context = kwargs.get("additional_context")  # type: Mapping[str, Any]
+
         if code is None:
             return []
 
@@ -144,15 +157,16 @@ class PythonEvaluator(Evaluator):
             exec(compiled_code, exposed_context, self._context)  # type: ignore
             return self._event_provider.pending
         except Exception as e:
-            raise CodeEvaluationError('"{}" occurred while executing "{}"'.format(e, code)) from e
+            raise_from(CodeEvaluationError('"{}" occurred while executing "{}"'.format(e, code)), e)
 
-    def evaluate_guard(self, transition: Transition, event: Optional[Event]=None) -> bool:
+    def evaluate_guard(self, transition, event=None):
         """
         Evaluate the guard for given transition.
 
-        :param transition: the considered transition
-        :param event: instance of *Event* if any
+        :param Transition transition: the considered transition
+        :param Optional[Event] event: instance of *Event* if any
         :return: truth value of *code*
+        :rtype: bool
         """
         additional_context = {
             'after': partial(self._time_provider.after, transition.source),
@@ -161,14 +175,15 @@ class PythonEvaluator(Evaluator):
         }
         return self._evaluate_code(getattr(transition, 'guard', None), additional_context=additional_context)
 
-    def evaluate_preconditions(self, obj, event: Optional[Event]=None) -> Iterator[str]:
+    def evaluate_preconditions(self, obj, event=None):
         """
         Evaluate the preconditions for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
 
         :param obj: the considered state or transition
-        :param event: an optional *Event* instance, in the case of a transition
+        :param Optional[Event] event: an optional *Event* instance, in the case of a transition
         :return: list of unsatisfied conditions
+        :rtype: Iterator[str]
         """
         additional_context = {
             'received': self._event_provider.received,
@@ -185,14 +200,15 @@ class PythonEvaluator(Evaluator):
             getattr(obj, 'preconditions', [])
         )
 
-    def evaluate_invariants(self, obj, event: Optional[Event]=None) -> Iterator[str]:
+    def evaluate_invariants(self, obj, event=None):
         """
         Evaluate the invariants for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
 
         :param obj: the considered state or transition
-        :param event: an optional *Event* instance, in the case of a transition
+        :param Optional[Event] event: an optional *Event* instance, in the case of a transition
         :return: list of unsatisfied conditions
+        :rtype: Iterator[str]
         """
         state_name = obj.source if isinstance(obj, Transition) else obj.name
 
@@ -210,14 +226,15 @@ class PythonEvaluator(Evaluator):
             getattr(obj, 'invariants', [])
         )
 
-    def evaluate_postconditions(self, obj, event: Optional[Event]=None) -> Iterator[str]:
+    def evaluate_postconditions(self, obj, event=None):
         """
         Evaluate the postconditions for given object (either a *StateMixin* or a
         *Transition*) and return a list of conditions that are not satisfied.
 
         :param obj: the considered state or transition
-        :param event: an optional *Event* instance, in the case of a transition
+        :param Optional[Event] event: an optional *Event* instance, in the case of a transition
         :return: list of unsatisfied conditions
+        :rtype: Iterator[str]
         """
         state_name = obj.source if isinstance(obj, Transition) else obj.name
         

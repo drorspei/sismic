@@ -44,12 +44,14 @@ setup(
     keywords='statechart state machine interpreter model uml scxml harel',
 
     packages=find_packages(exclude=['docs', 'tests']),
-    python_requires='>=3.5',
+    python_requires='>=2.7',
     install_requires=[
         'ruamel.yaml>=0.12.10',
         'schema>=0.6.2',
         'behave>=1.2.6',
-        'typing>=3.5.1'
+        'typing>=3.5.1',
+        'six',
+        'backports'
     ],
 
     entry_points={

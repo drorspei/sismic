@@ -10,27 +10,25 @@ from ..model import (
 __all__ = ['export_to_plantuml']
 
 
-class PlantUMLExporter:
+class PlantUMLExporter(object):
     def __init__(
             self,
-            statechart: Statechart, *,
-            based_on: str=None,
-            statechart_name: bool=True,
-            statechart_description: bool=True,
-            statechart_preamble: bool=True,
-            state_contracts: bool=True,
-            state_action: bool=True,
-            transition_contracts: bool=True,
-            transition_action: bool=True) -> None:
+            statechart, *args, **kwargs):
+        """
+
+        :param Statechart statechart:
+        :param args:
+        :param kwargs:
+        """
         self.statechart = statechart
-        self.based_on = based_on
-        self.statechart_name = statechart_name
-        self.statechart_description = statechart_description
-        self.statechart_preamble = statechart_preamble
-        self.state_contracts = state_contracts
-        self.state_action = state_action
-        self.transition_contracts = transition_contracts
-        self.transition_action = transition_action
+        self.based_on = kwargs.get("based_on")
+        self.statechart_name = kwargs.get("statechart_name", True)
+        self.statechart_description = kwargs.get("statechart_description", True)
+        self.statechart_preamble = kwargs.get("statechart_preamble", True)
+        self.state_contracts = kwargs.get("state_contracts", True)
+        self.state_action = kwargs.get("state_action", True)
+        self.transition_contracts = kwargs.get("transition_contracts", True)
+        self.transition_action = kwargs.get("transition_action", True)
 
         self._based_on_arrows = dict()  # type: Dict[Tuple[str, str], str]
         if self.based_on:
@@ -57,7 +55,14 @@ class PlantUMLExporter:
     def deindent(self):
         self._indent -= 2
 
-    def output(self, text: str, *, wrap: str='') -> None:
+    def output(self, text, *args, **kwargs):
+        """
+
+        :param str text:
+        :param str wrap:
+        :return:
+        """
+        wrap = kwargs.get("wrap", "")
         lines = text.strip().split('\n')
 
         for line in lines:
@@ -73,7 +78,12 @@ class PlantUMLExporter:
             )
 
     @staticmethod
-    def state_id(name: str) -> str:
+    def state_id(name):
+        """
+
+        :param str name:
+        :rtype: str
+        """
         return ''.join(filter(str.isalnum, name))
 
     def export_statechart(self):
@@ -90,7 +100,11 @@ class PlantUMLExporter:
             self.deindent()
             self.output('end note')
 
-    def export_state(self, name: str) -> None:
+    def export_state(self, name):
+        """
+
+        :param str name:
+        """
         state = self.statechart.state_for(name)
 
         # Special case for final state
@@ -176,7 +190,12 @@ class PlantUMLExporter:
         self.deindent()
         self.output('}')
 
-    def export_transitions(self, source_name: str) -> None:
+    def export_transitions(self, source_name):
+        """
+
+        :param str source_name:
+        :return:
+        """
         # Transitions (except internal ones)
         transitions = filter(lambda t: not t.internal, self.statechart.transitions_from(source_name))
 
@@ -186,7 +205,12 @@ class PlantUMLExporter:
                 continue
             self.export_transition(transition)
 
-    def export_transition(self, transition: Transition) -> None:
+    def export_transition(self, transition):
+        """
+
+        :param Transition transition:
+        :return:
+        """
         target = self.statechart.state_for(transition.target)
 
         if isinstance(target, FinalState):
@@ -223,7 +247,11 @@ class PlantUMLExporter:
             text=''.join(text),
         ))
 
-    def export(self) -> str:
+    def export(self):
+        """
+
+        :rtype: str
+        """
         self.output('@startuml')
 
         self.export_statechart()
@@ -235,18 +263,9 @@ class PlantUMLExporter:
 
 
 def export_to_plantuml(
-        statechart: Statechart,
-        filepath: str=None,
-        *,
-        based_on: str=None,
-        based_on_filepath: str=None,
-        statechart_name: bool=True,
-        statechart_description: bool=False,
-        statechart_preamble: bool=False,
-        state_contracts: bool=False,
-        state_action: bool=True,
-        transition_contracts: bool=False,
-        transition_action: bool=True) -> str:
+        statechart,
+        filepath=None, **kwargs
+        ):
     """
     Export given statechart to plantUML (see http://plantuml/plantuml).
     If a filepath is provided, also save the output to this file.
@@ -259,8 +278,8 @@ def export_to_plantuml(
     or as a filepath (based_on_filepath parameter), it will attempt to reuse the modifications made
     to the transitions (their direction and length).
 
-    :param statechart: statechart to export
-    :param filepath: save output to given filepath, if provided
+    :param Statechart statechart: statechart to export
+    :param str filepath: save output to given filepath, if provided
     :param based_on: existing representation of the statechart in PlantUML
     :param based_on_filepath: filepath to an existing representation of the statechart in PlantUML
     :param statechart_name: include the name of the statechart
@@ -271,7 +290,17 @@ def export_to_plantuml(
     :param transition_contracts: include transition contracts
     :param transition_action: include actions on transition
     :return: textual representation using plantuml
+    :rtype: str
     """
+    based_on = kwargs.get("based_on", None)  # type: str
+    based_on_filepath = kwargs.get("based_on_filepath", None)  # type: str
+    statechart_name = kwargs.get("statechart_name", True)
+    statechart_description = kwargs.get("statechart_description", False)
+    statechart_preamble = kwargs.get("statechart_preamble", False)
+    state_contracts = kwargs.get("state_contracts", False)
+    state_action = kwargs.get("state_action", True)
+    transition_contracts = kwargs.get("transition_contracts", False)
+    transition_action = kwargs.get("transition_action", True)
 
     if based_on and based_on_filepath:
         raise TypeError('Parameters based_on and based_on_filepath cannot both be provided at the same time.')

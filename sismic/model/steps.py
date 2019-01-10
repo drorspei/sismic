@@ -6,7 +6,7 @@ from .events import Event
 __all__ = ['MicroStep', 'MacroStep']
 
 
-class MicroStep:
+class MicroStep(object):
     """
     Create a micro step.
 
@@ -14,17 +14,17 @@ class MicroStep:
     of *entered_states* and a list of *exited_states*.
     Order in the two lists is REALLY important!
 
-    :param event: Event or None in case of eventless transition
-    :param transition: a *Transition* or None if no processed transition
-    :param entered_states: possibly empty list of entered states
-    :param exited_states: possibly empty list of exited states
-    :param sent_events: a possibly empty list of events that are sent during the step
+    :param Event event: Event or None in case of eventless transition
+    :param Transition transition: a *Transition* or None if no processed transition
+    :param List[str] entered_states: possibly empty list of entered states
+    :param List[str] exited_states: possibly empty list of exited states
+    :param List[Event] sent_events: a possibly empty list of events that are sent during the step
     """
 
     __slots__ = ['event', 'transition', 'entered_states', 'exited_states', 'sent_events']
 
-    def __init__(self, event: Event=None, transition: Transition=None, entered_states: List[str]=None,
-                 exited_states: List[str]=None, sent_events: List[Event]=None) -> None:
+    def __init__(self, event=None, transition=None, entered_states=None,
+                 exited_states=None, sent_events=None):
         self.event = event
         self.transition = transition
         self.entered_states = entered_states if entered_states else []  # type: List[str]
@@ -46,38 +46,44 @@ class MicroStep:
         return '{}({})'.format(self.__class__.__name__, ', '.join(params))
 
 
-class MacroStep:
+class MacroStep(object):
     """
     A macro step is a list of micro steps.
 
-    :param time: the time at which this step was executed
-    :param steps: a list of *MicroStep* instances
+    :param float time: the time at which this step was executed
+    :param List[MicroStep] steps: a list of *MicroStep* instances
     """
 
-    def __init__(self, time: float, steps: List[MicroStep]) -> None:
+    def __init__(self, time, steps):
         self._time = time
         self._steps = steps
 
     __slots__ = ['_time', '_steps']
 
     @property
-    def steps(self) -> List[MicroStep]:
+    def steps(self):
         """
         List of micro steps
+
+        :rtype: List[MicroStep]
         """
         return self._steps
 
     @property
-    def time(self) -> float:
+    def time(self):
         """
         Time at which this step was executed.
+
+        :rtype: float
         """
         return self._time
 
     @property
-    def event(self) -> Optional[Event]:
+    def event(self):
         """
         Event (or *None*) that was consumed.
+
+        :rtype: Optional[Event]
         """
         for step in self._steps:
             if step.event:
@@ -85,16 +91,20 @@ class MacroStep:
         return None
 
     @property
-    def transitions(self) -> List[Transition]:
+    def transitions(self):
         """
         A (possibly empty) list of transitions that were triggered.
+
+        :rtype: List[Transition]
         """
         return [step.transition for step in self._steps if step.transition]
 
     @property
-    def entered_states(self) -> List[str]:
+    def entered_states(self):
         """
         List of the states names that were entered.
+
+        :rtype: List[str]
         """
         states = []  # type: List[str]
         for step in self._steps:
@@ -102,9 +112,11 @@ class MacroStep:
         return states
 
     @property
-    def exited_states(self) -> List[str]:
+    def exited_states(self):
         """
         List of the states names that were exited.
+
+        :rtype: List[str]
         """
         states = []  # type: List[str]
         for step in self._steps:
@@ -112,9 +124,11 @@ class MacroStep:
         return states
 
     @property
-    def sent_events(self) -> List[Event]:
+    def sent_events(self):
         """
         List of events that were sent during this step.
+
+        :rtype: List[Event]
         """
         events = []
         for step in self._steps:

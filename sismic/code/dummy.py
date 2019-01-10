@@ -11,15 +11,32 @@ class DummyEvaluator(Evaluator):
     A dummy evaluator that does nothing and evaluates every condition to True.
     """
 
-    def __init__(self, interpreter=None, *, initial_context=None):
-        super().__init__(interpreter, initial_context=initial_context)
+    def __init__(self, interpreter=None, **kwargs):
+        initial_context = kwargs.get("initial_context")
+        super(DummyEvaluator, self).__init__(interpreter, initial_context=initial_context)
 
     @property
     def context(self):
         return dict()
 
-    def _evaluate_code(self, code: str, *, additional_context: Mapping=None) -> bool:
+    def _evaluate_code(self, code, **kwargs):
+        """
+
+        :param str code:
+        :param additional_context:
+        :return:
+        :rtype: bool
+        """
+        additional_context = kwargs.get("additional_context")  # type: Mapping
         return True
 
-    def _execute_code(self, code: str, *, additional_context: Mapping=None) -> List[Event]:
+    def _execute_code(self, code, **kwargs):
+        """
+
+        :param str code:
+        :param additional_context:
+        :return:
+        :rtype: List[Event]
+        """
+        additional_context = kwargs.get("additional_context")  # type: Mapping
         return []

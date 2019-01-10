@@ -6,12 +6,13 @@ __all__ = ['ContractMixin', 'StateMixin', 'ActionStateMixin', 'TransitionStateMi
            'DeepHistoryState', 'FinalState', 'Transition']
 
 
-class ContractMixin(metaclass=ABCMeta):
+class ContractMixin(object):
     """
     Mixin with a contract: preconditions, postconditions and invariants.
     """
+    __metaclass__ = ABCMeta
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.preconditions = []  # type: List[str]
         self.postconditions = []  # type: List[str]
         self.invariants = []  # type: List[str]
@@ -27,14 +28,16 @@ class ContractMixin(metaclass=ABCMeta):
             return NotImplemented
 
 
-class StateMixin(metaclass=ABCMeta):
+class StateMixin(object):
     """
     State element with a name.
 
-    :param name: name of the state
+    :param str name: name of the state
     """
 
-    def __init__(self, name: str) -> None:
+    __metaclass__ = ABCMeta
+
+    def __init__(self, name):
         self._name = name
 
     @property
@@ -54,15 +57,17 @@ class StateMixin(metaclass=ABCMeta):
         return hash(self.name)
 
 
-class ActionStateMixin(metaclass=ABCMeta):
+class ActionStateMixin(object):
     """
     State that can define actions on entry and on exit.
 
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
     """
 
-    def __init__(self, on_entry: str=None, on_exit: str=None) -> None:
+    __metaclass__ = ABCMeta
+
+    def __init__(self, on_entry=None, on_exit=None):
         self.on_entry = on_entry
         self.on_exit = on_exit
 
@@ -76,32 +81,38 @@ class ActionStateMixin(metaclass=ABCMeta):
             return NotImplemented
 
 
-class TransitionStateMixin(metaclass=ABCMeta):
+class TransitionStateMixin(object):
     """
     A simple state can host transitions
     """
+
+    __metaclass__ = ABCMeta
 
     def __eq__(self, other):
         return isinstance(other, TransitionStateMixin)
 
 
-class CompositeStateMixin(metaclass=ABCMeta):
+class CompositeStateMixin(object):
     """
     Composite state can have children states.
     """
+
+    __metaclass__ = ABCMeta
 
     def __eq__(self, other):
         return isinstance(other, CompositeStateMixin)
 
 
-class HistoryStateMixin(metaclass=ABCMeta):
+class HistoryStateMixin(object):
     """
     History state has a memory that can be resumed.
 
-    :param memory: name of the initial state
+    :param str memory: name of the initial state
     """
 
-    def __init__(self, memory: str=None) -> None:
+    __metaclass__ = ABCMeta
+
+    def __init__(self, memory=None):
         self.memory = memory
 
     def __eq__(self, other):
@@ -115,12 +126,12 @@ class BasicState(ContractMixin, StateMixin, ActionStateMixin, TransitionStateMix
     """
     A basic state, with a name, transitions, actions, etc. but no child state.
 
-    :param name: name of this state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
+    :param str name: name of this state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str=None, on_exit: str=None) -> None:
+    def __init__(self, name, on_entry=None, on_exit=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -142,13 +153,13 @@ class CompoundState(ContractMixin, StateMixin, ActionStateMixin, TransitionState
     """
     Compound states must have children states.
 
-    :param name: name of this state
-    :param initial: name of the initial state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
+    :param str name: name of this state
+    :param str initial: name of the initial state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, initial: str=None, on_entry: str=None, on_exit: str=None) -> None:
+    def __init__(self, name, initial=None, on_entry=None, on_exit=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -173,12 +184,12 @@ class OrthogonalState(ContractMixin, StateMixin, ActionStateMixin, TransitionSta
     """
     Orthogonal states run their children simultaneously.
 
-    :param name: name of this state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
+    :param str name: name of this state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str=None, on_exit: str=None) -> None:
+    def __init__(self, name, on_entry=None, on_exit=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -203,12 +214,12 @@ class ShallowHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistorySt
     A shallow history state resumes the execution of its parent.
     It activates the latest visited state of its parent.
 
-    :param name: name of this state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
-    :param memory: name of the initial state
+    :param str name: name of this state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
+    :param str memory: name of the initial state
     """
-    def __init__(self, name: str, on_entry: str=None, on_exit: str=None, memory: str=None) -> None:
+    def __init__(self, name, on_entry=None, on_exit=None, memory=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -231,12 +242,12 @@ class DeepHistoryState(ContractMixin, StateMixin, ActionStateMixin, HistoryState
     A deep history state resumes the execution of its parent, and of every nested
     active states in its parent.
 
-    :param name: name of this state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
-    :param memory: name of the initial state
+    :param str name: name of this state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
+    :param str memory: name of the initial state
     """
-    def __init__(self, name: str, on_entry: str=None, on_exit: str=None, memory: str=None) -> None:
+    def __init__(self, name, on_entry=None, on_exit=None, memory=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -258,12 +269,12 @@ class FinalState(ContractMixin, StateMixin, ActionStateMixin):
     """
     Final state has NO transition and is used to detect state machine termination.
 
-    :param name: name of this state
-    :param on_entry: code to execute when state is entered
-    :param on_exit: code to execute when state is exited
+    :param str name: name of this state
+    :param str on_entry: code to execute when state is entered
+    :param str on_exit: code to execute when state is exited
     """
 
-    def __init__(self, name: str, on_entry: str = None, on_exit: str = None) -> None:
+    def __init__(self, name, on_entry=None, on_exit=None):
         ContractMixin.__init__(self)
         StateMixin.__init__(self, name)
         ActionStateMixin.__init__(self, on_entry, on_exit)
@@ -286,11 +297,11 @@ class Transition(ContractMixin):
     A transition can be eventless (no event) or internal (no target).
     A condition (code as string) can be specified as a guard.
 
-    :param source: name of the source state
-    :param target: name of the target state (if transition is not internal)
-    :param event: event name (if any)
-    :param guard: condition as code (if any)
-    :param action: action as code (if any)
+    :param str source: name of the source state
+    :param str target: name of the target state (if transition is not internal)
+    :param str event: event name (if any)
+    :param str guard: condition as code (if any)
+    :param str action: action as code (if any)
     :param priority: priority (default to 0)
     """
 
@@ -298,7 +309,7 @@ class Transition(ContractMixin):
     DEFAULT_PRIORITY = 0
     HIGH_PRIORITY = 1
 
-    def __init__(self, source: str, target: str=None, event: str=None, guard: str=None, action: str=None, priority=None) -> None:
+    def __init__(self, source, target=None, event=None, guard=None, action=None, priority=None):
         ContractMixin.__init__(self)
         self._source = source
         self._target = target

@@ -1,3 +1,4 @@
+from future.utils import raise_from
 from typing import Iterable
 
 import ruamel.yaml as yaml
@@ -11,7 +12,7 @@ from .datadict import export_to_dict, import_from_dict
 __all__ = ['import_from_yaml', 'export_to_yaml']
 
 
-class SCHEMA:
+class SCHEMA(object):
     contract = {schema.Or('before', 'after', 'always'): schema.Use(str)}
 
     transition = {
@@ -46,19 +47,26 @@ class SCHEMA:
     }
 
 
-def import_from_yaml(text: Iterable[str]=None, filepath: str=None, *, ignore_schema: bool=False, ignore_validation: bool=False) -> Statechart:
+def import_from_yaml(text=None, filepath=None, *args, **kwargs):
     """
     Import a statechart from a YAML representation (first argument) or a YAML file (filepath argument).
 
     Unless specified, the structure contained in the YAML is validated against a predefined
     schema (see *sismic.io.SCHEMA*), and the resulting statechart is validated using its *validate()* method.
 
-    :param text: A YAML text. If not provided, filepath argument has to be provided.
-    :param filepath: A path to a YAML file.
-    :param ignore_schema: set to *True* to disable yaml validation.
-    :param ignore_validation: set to *True* to disable statechart validation.
+    kwargs:
+        ignore_schema: set to *True* to disable yaml validation.
+        ignore_validation: set to *True* to disable statechart validation.
+
+
+    :param Iterable[str] text: A YAML text. If not provided, filepath argument has to be provided.
+    :param str filepath: A path to a YAML file.
     :return: a *Statechart* instance
+    :rtype: Statechart
     """
+    ignore_schema = kwargs.get("ignore_schema", False)  # type: bool
+    ignore_validation = kwargs.get("ignore_validation", False)  # type: bool
+
     if not text and not filepath:
         raise TypeError('A YAML must be provided, either using first argument or filepath argument.')
     elif text and filepath:
@@ -77,7 +85,7 @@ def import_from_yaml(text: Iterable[str]=None, filepath: str=None, *, ignore_sch
         try:
             data = schema.Schema(SCHEMA.statechart).validate(data)
         except schema.SchemaError as e:
-            raise StatechartError('YAML validation failed') from e
+            raise_from(StatechartError('YAML validation failed'), e)
 
     sc = import_from_dict(data)
 
@@ -86,14 +94,15 @@ def import_from_yaml(text: Iterable[str]=None, filepath: str=None, *, ignore_sch
     return sc
 
 
-def export_to_yaml(statechart: Statechart, filepath: str=None) -> str:
+def export_to_yaml(statechart, filepath=None):
     """
     Export given *Statechart* instance to YAML. Its YAML representation is returned by this function.
     Automatically save the output to filepath, if provided.
 
-    :param statechart: statechart to export
-    :param filepath: save output to given filepath, if provided
+    :param Statechart statechart: statechart to export
+    :param str filepath: save output to given filepath, if provided
     :return: A textual YAML representation
+    :rtype: str
     """
     output = yaml.dump(export_to_dict(statechart, ordered=False),
                        width=1000, default_flow_style=False)

@@ -1,3 +1,4 @@
+from future.utils import raise_from
 from collections import OrderedDict
 from typing import Any, List, Mapping, MutableMapping, Optional, Tuple, cast
 
@@ -10,7 +11,12 @@ from ..model import (ActionStateMixin, BasicState, CompositeStateMixin,
 __all__ = ['import_from_dict', 'export_to_dict']
 
 
-def import_from_dict(data: Mapping[str, Any]) -> Statechart:
+def import_from_dict(data):
+    """
+
+    :param Mapping[str, Any] data:
+    :rtype: Statechart
+    """
     data = data['statechart']
 
     statechart = Statechart(name=data['name'],
@@ -31,7 +37,7 @@ def import_from_dict(data: Mapping[str, Any]) -> Statechart:
         except StatechartError:
             raise
         except Exception as e:
-            raise StatechartError('Unable to load given YAML') from e
+            raise_from(StatechartError('Unable to load given YAML'), e)
         states.append((state, parent_name))
 
         # Get substates
@@ -49,7 +55,7 @@ def import_from_dict(data: Mapping[str, Any]) -> Statechart:
             except StatechartError:
                 raise
             except Exception as e:
-                raise StatechartError('Unable to load given YAML') from e
+                raise_from(StatechartError('Unable to load given YAML'), e)
             transitions.append(transition)
 
     # Register on statechart
@@ -61,13 +67,14 @@ def import_from_dict(data: Mapping[str, Any]) -> Statechart:
     return statechart
 
 
-def _import_transition_from_dict(state_name: str, transition_d: Mapping[str, Any]) -> Transition:
+def _import_transition_from_dict(state_name, transition_d):
     """
     Return a Transition instance from given dict.
 
-    :param state_name: name of the state in which the transition is defined
-    :param transition_d: a dictionary containing transition data
+    :param str state_name: name of the state in which the transition is defined
+    :param Mapping[str, Any] transition_d: a dictionary containing transition data
     :return: an instance of Transition
+    :rtype: Transition
     """
     event = transition_d.get('event', None)
     guard = transition_d.get('guard', None)
@@ -100,12 +107,13 @@ def _import_transition_from_dict(state_name: str, transition_d: Mapping[str, Any
     return transition
 
 
-def _import_state_from_dict(state_d: Mapping[str, Any]) -> StateMixin:
+def _import_state_from_dict(state_d):
     """
     Return the appropriate type of state from given dict.
 
-    :param state_d: a dictionary containing state data
+    :param Mapping[str, Any] state_d: a dictionary containing state data
     :return: a specialized instance of State
+    :rtype: StateMixin
     """
     name = state_d['name']  # type: str
     stype = state_d.get('type', None)
@@ -149,13 +157,14 @@ def _import_state_from_dict(state_d: Mapping[str, Any]) -> StateMixin:
     return state
 
 
-def export_to_dict(statechart: Statechart, ordered=True) -> Mapping[str, Any]:
+def export_to_dict(statechart, ordered=True):
     """
     Export given StateChart instance to a dict.
 
-    :param statechart: a StateChart instance
+    :param Statechart statechart: a StateChart instance
     :param ordered: set to True to use an ordereddict instead of a dict
     :return: a dict that can be used in *_import_from_dict*
+    :rtype: Mapping[str, Any]
     """
     d = OrderedDict() if ordered else {}  # type: MutableMapping
     d['name'] = statechart.name
@@ -169,7 +178,15 @@ def export_to_dict(statechart: Statechart, ordered=True) -> Mapping[str, Any]:
     return {'statechart': d}
 
 
-def _export_state_to_dict(statechart: Statechart, state_name: str, ordered=True) -> Mapping[str, Any]:
+def _export_state_to_dict(statechart, state_name, ordered=True):
+    """
+
+    :param Statechart statechart:
+    :param str state_name:
+    :param ordered:
+    :return:
+    :rtype: Mapping[str, Any]
+    """
     data = OrderedDict() if ordered else {}
 
     state = statechart.state_for(state_name)
