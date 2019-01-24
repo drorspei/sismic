@@ -248,7 +248,7 @@ class Interpreter(object):
         :rtype: Interpreter
         """
         for event in [event_or_name] + list(event_or_names):
-            event = Event(event, **parameters) if isinstance(event, str) else event
+            event = Event(event, **parameters) if isinstance(event, (str, unicode)) else event
             self._queue_event(event)
         return self
 

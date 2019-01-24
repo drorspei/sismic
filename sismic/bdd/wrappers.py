@@ -34,11 +34,11 @@ def map_action(step_text, existing_step_or_steps):
 
     @given(step_text)
     def _(context, **kwargs):
-        context.execute_steps('Given ' + existing_step_or_steps.format(**kwargs))
+        context.execute_steps(u'Given ' + existing_step_or_steps.format(**kwargs))
 
     @when(step_text)
     def _(context, **kwargs):
-        context.execute_steps('When ' + existing_step_or_steps.format(**kwargs))
+        context.execute_steps(u'When ' + existing_step_or_steps.format(**kwargs))
 
 
 def map_assertion(step_text, existing_step_or_steps):
@@ -58,7 +58,7 @@ def map_assertion(step_text, existing_step_or_steps):
 
     @then(step_text)
     def _(context, **kwargs):
-        context.execute_steps('Then ' + existing_step_or_steps.format(**kwargs))
+        context.execute_steps(u'Then ' + existing_step_or_steps.format(**kwargs))
 
 
 def execute_bdd(statechart,

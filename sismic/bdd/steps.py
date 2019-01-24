@@ -18,7 +18,7 @@ def reproduce_scenario(context, scenario, **kwargs):
         if included_scenario.name == scenario:
             for step in included_scenario.steps:
                 if step.step_type in ['given', 'when']:
-                    context.execute_steps('{} {}'.format(keyword, step.name))
+                    context.execute_steps(u'{} {}'.format(keyword, step.name))
             return
     assert False, 'Unknown scenario {}.'.format(scenario)
 
@@ -33,7 +33,7 @@ def repeat_step(context, step, repeat, **kwargs):
     keyword = kwargs.get("keyword", 'Given')
 
     for _ in range(repeat):
-        context.execute_steps('{} {}'.format(keyword, step))
+        context.execute_steps(u'{} {}'.format(keyword, step))
 
 
 @when('I repeat "{step}" {repeat:d} times')
