@@ -1,4 +1,4 @@
-import tkinter as tk
+import Tkinter as tk
 from functools import partial
 
 from sismic.interpreter import Interpreter
@@ -17,7 +17,8 @@ sys.path.append('../../..')
 # Create a tiny GUI
 class MicrowaveApplication(tk.Frame):
     def __init__(self, master=None):
-        super().__init__(master)
+        tk.Frame.__init__(self, master)
+        # super(MicrowaveApplication, self).__init__(master=master)
 
         # Initialize widgets
         self.create_widgets()

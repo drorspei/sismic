@@ -1,5 +1,8 @@
 import time
-import tkinter as tk
+try:
+    import Tkinter as tk
+except ImportError:
+    import tkinter as tk
 
 from sismic.interpreter import Interpreter
 from sismic.io import import_from_yaml
@@ -16,7 +19,7 @@ sys.path.append('../../..')
 # Create a tiny GUI
 class StopwatchApplication(tk.Frame):
     def __init__(self, master=None):
-        super().__init__(master)
+        tk.Frame.__init__(self, master)
 
         # Initialize widgets
         self.create_widgets()
