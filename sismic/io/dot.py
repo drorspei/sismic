@@ -18,6 +18,7 @@ template_cluster = """
 subgraph cluster_{state_name} {{
   style = {style}
   label = "{state_name}"
+  color = {color}
   node [shape=Mrecord width=.4 height=.4];{inner_nodes}{initial}{additional_points}
 }}"""
 
@@ -29,13 +30,19 @@ template_invisible = """
   node [shape=point style=invisible width=0 height=0];
   invisible_{state_name}"""
 
-template_leaf = "\n{state_name} [label=\"{state_name}\" shape=Mrecord]"
+template_leaf = "\n{state_name} [label=\"{state_name}\" shape=Mrecord style={style} color={color}]"
 
-template_transition = "\n{source} -> {target} [label=\"{label}\"{ltail}{lhead}{dir}]"
+template_transition = "\n{source} -> {target} [label=\"{label}\"{ltail}{lhead}{dir}{color}]"
 
 
-def visit_state(sc, state_name):
+def visit_state(sc, state_name, configuration=()):
     state = sc.state_for(state_name)
+    color = "black"
+    style = "none"
+
+    if state_name in configuration:
+        color = "\"#3399ff\""
+        style = "filled"
 
     if isinstance(state, CompositeStateMixin):
         if isinstance(state, CompoundState):
@@ -49,7 +56,8 @@ def visit_state(sc, state_name):
         if sc.transitions_to(state_name) or sc.transitions_from(state_name):
             initial = "{}{}".format(initial, template_invisible.format(state_name=state_name))
 
-        inner_nodes = '\n'.join(indent(visit_state(sc, inner)) for inner in sc.children_for(state_name))
+        inner_nodes = '\n'.join(indent(visit_state(sc, inner, configuration=configuration))
+                                for inner in sc.children_for(state_name))
 
         additional_points = '\n'.join(
             "  point_{child}_{ind}".format(child=child, ind=ind)
@@ -61,9 +69,9 @@ def visit_state(sc, state_name):
                                                   additional_points)
 
         return template_cluster.format(state_name=state_name, initial=initial, inner_nodes=inner_nodes,
-                                       style=style, additional_points=additional_points)
+                                       style=style, additional_points=additional_points, color=color)
 
-    return template_leaf.format(state_name=state_name)
+    return template_leaf.format(state_name=state_name, style=style, color=color)
 
 
 def get_valid_nodes(sc, state_name):
@@ -75,7 +83,7 @@ def get_valid_nodes(sc, state_name):
     return state_name, state_name
 
 
-def get_edge_text(source, target, ltail, lhead, label, dir_):
+def get_edge_text(source, target, ltail, lhead, label, dir_, color):
     if ltail == source:
         ltail = ""
     else:
@@ -87,20 +95,23 @@ def get_edge_text(source, target, ltail, lhead, label, dir_):
         lhead = " lhead={}".format(lhead)
 
     return template_transition.format(source=source, target=target,
-                                      ltail=ltail, lhead=lhead, label=label, dir=dir_)
+                                      ltail=ltail, lhead=lhead, label=label, dir=dir_, color=color)
 
 
-def get_edges(sc, include_guards, include_actions):
+def get_edges(sc, include_guards, include_actions, configuration=()):
     edges = []
     for state_name in sc.states:
         for ind, transition in enumerate(sc.transitions_from(state_name)):
             valid_source, source = get_valid_nodes(sc, transition.source)
             valid_target, target = get_valid_nodes(sc, transition.target)
 
+            color = ""
             label_parts = []
 
             if transition.event:
                 label_parts.append(transition.event)
+                if state_name in configuration:
+                    color = " color=\"#3399ff\""
             if include_guards and transition.guard:
                 label_parts.append('[{}]'.format(transition.guard.replace('"', '\\"')))
             if include_actions and transition.action:
@@ -111,19 +122,19 @@ def get_edges(sc, include_guards, include_actions):
             if transition.target in sc.descendants_for(state_name):
                 out_point = "point_{}_{}".format(state_name, ind)
                 edges.append(get_edge_text(source=valid_source, target=out_point,
-                                           ltail=source, lhead=target, label="", dir_=" dir=none"))
+                                           ltail=source, lhead=target, label="", dir_=" dir=none", color=color))
                 edges.append(get_edge_text(source=out_point, target=valid_target,
-                                           ltail=source, lhead=target, label=label, dir_=""))
+                                           ltail=source, lhead=target, label=label, dir_="", color=color))
             else:
                 edges.append(get_edge_text(source=valid_source, target=valid_target,
-                                           ltail=source, lhead=target, label=label, dir_=""))
+                                           ltail=source, lhead=target, label=label, dir_="", color=color))
 
     return "".join(edges)
 
 
-def export_to_dot(sc, include_guards=True, include_actions=True, edge_fontsize=14):
-    nodes = indent(visit_state(sc, sc.root))
-    edges = indent(get_edges(sc, include_guards, include_actions))
+def export_to_dot(sc, include_guards=True, include_actions=True, edge_fontsize=14, configuration=()):
+    nodes = indent(visit_state(sc, sc.root, configuration=configuration))
+    edges = indent(get_edges(sc, include_guards, include_actions, configuration=configuration))
 
     return template_doc.format(name=sc.name, nodes=nodes, edges=edges, fontsize=edge_fontsize)
 
