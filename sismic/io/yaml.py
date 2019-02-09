@@ -82,10 +82,7 @@ def import_from_yaml(text=None, filepath=None, *args, **kwargs):
         data = yml.load(text)
 
     if not ignore_schema:
-        try:
-            data = schema.Schema(SCHEMA.statechart).validate(data)
-        except schema.SchemaError as e:
-            raise_from(StatechartError('YAML validation failed'), e)
+        data = schema.Schema(SCHEMA.statechart).validate(data)
 
     sc = import_from_dict(data)
 

@@ -153,11 +153,11 @@ class PythonEvaluator(Evaluator):
         }
         exposed_context.update(additional_context if additional_context is not None else {})
 
-        try:
-            exec(compiled_code, exposed_context, self._context)  # type: ignore
-            return self._event_provider.pending
-        except Exception as e:
-            raise_from(CodeEvaluationError('"{}" occurred while executing "{}"'.format(e, code)), e)
+        # try:
+        exec(compiled_code, exposed_context, self._context)  # type: ignore
+        return self._event_provider.pending
+        # except Exception as e:
+        #     raise_from(CodeEvaluationError('"{}" occurred while executing "{}"'.format(e, code)), e)
 
     def evaluate_guard(self, transition, event=None):
         """
