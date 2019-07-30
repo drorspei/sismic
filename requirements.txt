@@ -4,7 +4,7 @@ sphinx-autodoc-typehints>=1.2.5,!=1.5.0
 pytest>=3.4.2
 pytest-mock>=1.7.1
 future
-ruamel.yaml>=0.12.10
+ruamel.yaml<=0.15.97
 schema>=0.6.2
 behave>=1.2.6
 typing>=3.5.1
