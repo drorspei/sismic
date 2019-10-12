@@ -358,11 +358,19 @@ class Transition(ContractMixin):
         return 'Transition({!r}, {!r}, event={!r})'.format(self.source, self.target, self.event)
 
     def __str__(self):
-        return '{} -> {}{} [{}] -> {}'.format(
+        action = ''
+        if self.action is not None:
+            if len(self.action) < 20:
+                action = ' / ({})'.format(self.action)
+            else:
+                action = ' / ({}...)'.format(self.action[:17])
+
+        return '{}{}{}{}{} -> {}'.format(
             self.source,
-            '' if self.priority == 0 else '{}:'.format(self.priority),
-            self.event,
-            self.guard,
+            '' if self.priority == 0 else ' {}:'.format(self.priority),
+            '' if self.event is None else ' + {}'.format(self.event),
+            '' if self.guard is None else ' [{}]'.format(self.guard),
+            action,
             self.target if self.target else ''
         )
 

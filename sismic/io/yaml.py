@@ -35,6 +35,7 @@ class SCHEMA(object):
         schema.Optional('initial'): schema.Use(str),
         schema.Optional('parallel states'): [state],
         schema.Optional('states'): [state],
+        schema.Optional('memory'): schema.Use(str)
     })
 
     statechart = {
